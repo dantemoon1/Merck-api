@@ -5,6 +5,7 @@ from pydantic import BaseModel
 #from deta import Deta, Drive
 from dotenv import load_dotenv
 import os
+import json
 
 #imports for parsing
 import PyPDF2
@@ -13,7 +14,11 @@ import csv
 import camelot
 import pandas as pd
 
+#stage = os.environ.get('STAGE', None)
+#openapi_prefix = f"/{stage}" if stage else "/"
 
+
+#app = FastAPI(openapi_prefix=openapi_prefix)
 app = FastAPI()
 #deta = Deta(os.environ.get("DETA_PROJECT_KEY"))
 #drive = Drive("merck_drive")
@@ -22,6 +27,8 @@ load_dotenv()
 
 @app.get("/", response_class=HTMLResponse)
 def render():
+    #print all the folders in the current directory
+    #print(os.listdir())
     return """
     <form action="/upload" method="post" enctype="multipart/form-data">
         <input type="file" name="file">
@@ -32,17 +39,17 @@ def render():
 @app.post("/upload")
 def upload(file: UploadFile = File(...)):
     #upload file to /tmp
-    with open(f"data/{file.filename}", "wb") as buffer:
+    with open(f"tmp/{file.filename}", "wb") as buffer:
         buffer.write(file.file.read())
     #get the name of the file from tmp
-    file_name = f"data/{file.filename}"
+    file_name = f"tmp/{file.filename}"
     #redirect to the root route
     return RedirectResponse(url="/", status_code=303)
 
 @app.get("/parse")
 def parse_pdf():
 
-    os.chdir("data") #change directory to /tmp
+    os.chdir("/tmp") #change directory to /tmp
 
     inputFile = "BP-0001.pdf"
     pdfFileObj = open(inputFile, 'rb')
@@ -336,12 +343,14 @@ def parse_pdf():
 
 
     return Response(pd.read_csv('BP-0001.csv').to_json(orient='records'), media_type='application/json')
+    # return the csv as json without pandas
+    #return Response(json.dumps(rows), media_type='application/json')
 
 @app.get("/pdftest")
 def pdfTest():
     #open the pdf located in /tmp and return the first page text
     inputFile = "BP-0001.pdf"
-    pdfFileObj = open(f"/data/{inputFile}", 'rb')
+    pdfFileObj = open(f"tmp/{inputFile}", 'rb')
     pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
     pageObj = pdfReader.getPage(0)
     return(pageObj.extractText())
@@ -349,11 +358,11 @@ def pdfTest():
 @app.get("/allfiles")
 def allfiles():
     #get all files in /tmp
-    return {"files":os.listdir("/data")}
+    return {"files":os.listdir("/tmp")}
 
 @app.get("/directorytest")
 def directoryTest():
     cwd = os.getcwd()
-    os.chdir("/data")
+    os.chdir("/tmp")
     nwd = os.getcwd()
     return {"cwd":cwd, "nwd":nwd}
