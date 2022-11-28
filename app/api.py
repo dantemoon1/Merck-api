@@ -14,21 +14,26 @@ import csv
 import camelot
 import pandas as pd
 
-#stage = os.environ.get('STAGE', None)
-#openapi_prefix = f"/{stage}" if stage else "/"
 
-
-#app = FastAPI(openapi_prefix=openapi_prefix)
 app = FastAPI()
-#deta = Deta(os.environ.get("DETA_PROJECT_KEY"))
-#drive = Drive("merck_drive")
 load_dotenv()
+
+#get the current working directory
+cwd = os.getcwd()
 
 
 @app.get("/", response_class=HTMLResponse)
 def render():
     #print all the folders in the current directory
     #print(os.listdir())
+
+    #check if the current directory is the base directory and if not, change it to the base directory
+    print('the default directory is: ', cwd)
+    print('the current directory is: ', os.getcwd())
+    if cwd != os.getcwd():
+        os.chdir(cwd)
+        print('the current directory is: ', os.getcwd())
+
     return """
     <form action="/upload" method="post" enctype="multipart/form-data">
         <input type="file" name="file">
@@ -39,12 +44,12 @@ def render():
 @app.post("/upload")
 def upload(file: UploadFile = File(...)):
     #upload file to /tmp
-    with open(f"tmp/{file.filename}", "wb") as buffer:
+    with open(f"/tmp/{file.filename}", "wb") as buffer:
         buffer.write(file.file.read())
     #get the name of the file from tmp
     file_name = f"tmp/{file.filename}"
     #redirect to the root route
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url="/parse", status_code=303)
 
 @app.get("/parse")
 def parse_pdf():
