@@ -1,5 +1,6 @@
 #from typing import Union
 from fastapi import FastAPI, Response, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 #from deta import Deta, Drive
@@ -16,6 +17,17 @@ import pandas as pd
 
 
 app = FastAPI()
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 load_dotenv()
 
 #get the current working directory
@@ -49,12 +61,18 @@ def upload(file: UploadFile = File(...)):
     #get the name of the file from tmp
     file_name = f"tmp/{file.filename}"
     #redirect to the root route
+    #return {"filename": file.filename}
     return RedirectResponse(url="/parse", status_code=303)
 
 @app.get("/parse")
 def parse_pdf():
 
     os.chdir("/tmp") #change directory to /tmp
+
+    #check if the csv already exists, if so return it as a response
+    if os.path.exists('BP-0001.csv'):
+        print('csv already exists on server')
+        return Response(pd.read_csv('BP-0001.csv').to_json(orient='records'), media_type='application/json')
 
     inputFile = "BP-0001.pdf"
     pdfFileObj = open(inputFile, 'rb')
