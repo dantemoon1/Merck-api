@@ -11,6 +11,7 @@ ghostscript==0.7
 h11==0.14.0
 idna==3.4
 mangum==0.16.0
+neo4j==5.3.0
 numpy==1.23.5
 opencv-python==4.6.0.66
 openpyxl==3.0.10

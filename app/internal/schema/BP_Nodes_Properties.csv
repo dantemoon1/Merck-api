@@ -1,0 +1,14 @@
+Compound,BP,SpecialRequirement,Instrumentation,MassSpectrometer,LiquidHandling,Supplier,LCComponent,Supplies,GeneralSupplies,EquipmentSupplies,PipettesSupplies,AutomationSupplies,Item,Reagents,Reagent,Solutions,Solution,StandardPreparation,StockStandardSolution,WorkingStandardSolution,QCPreparation,StockQCSolution,WorkingQCSolution,MatrixQCs,ISPreparation,StockISSolution,WorkingISSolution,Chromatography,ExtractionMethod,Procedure,OperatingParameters,WashParameters,UPLCParameters,UPLCProfile,MSParameters,IonsMonitored,SystemSuitability,BiologicalMatrix,LLOQ
+MK_number,BP_number,BP_number,BP_number,Name,Name,Name,Name,BP_number,BP_number,BP_number,BP_number,BP_number,Name,BP_number,Name,BP_number,Name,BP_number,Diluent,Diluent,BP_number,Storage_details,Storage_details,BP_number,BP_number,Solvent,Solvent,BP_number,BP_number,BP_number,BP_number,Levels ,Column,Levels ,Ion_Sourceï,Compound,BP_number,BP_number,BP_number
+L_number,Lead_analyst,Requirements,,,,,,,,,,,,,Abbreviation,,PreparationSummary,,Storage_temp,Storage_temp,,Solvent,Solvent,Preparation_instructions,,Stock_density,Stock_density,Method ,Name,Blank_matrix_steps,UPLC_parameters_table,,Loop_Option,,Ion_Mode,InternalStandard,Valid_observations,Matrix,LLOQ
+Form,Method_developer,,,,,,,,,,,,,,,,Use,,Solvent,Solvent,,Diluent,Diluent,Aliquot_volume,,Storage_temp,Storage_temp,Internal_standard,Species,Biological_matrix_steps,UPLC_table,,Needle_Type,,Q1/Q3_Resolutions,,Stability_assessment_density,Species,Regression_model
+Molecular_Weight,PI,,,,,,,,,,,,,,,,Storage,,Density,Density,,Stock_volume,Stock_volume,table,,Working_density,Working_density,,Matrix,Sample_preparation_table,Wash_table,,Elution,,Scan_Type,,Analysis_table,Anticoagulant,Calibration_range
+Watson_ID,Matrix,,,,,,,,,,,,,,,,,,Standard_spike_volume,Standard_spike_volume,,,table,,,IS_volume,IS_volume,,Matrix_sample_quantity,Vortex_time,MS_paramters_table,,Flow_Rate,,Ionization_potential,,,,
+,,,,,,,,,,,,,,,,,,,Standard_matrix_volume,Standard_matrix_volume,,,,,,Diluent,Diluent,,,Vortex_RPM,Ions_table,,Mobile_Phase_A,,Temperature,,,,
+,,,,,,,,,,,,,,,,,,,,table,,,,,,Diluent_volume,Diluent_volume,,,,,,Mobile_Phase_B,,Curtain_Gas-N2,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Injection_Volume,,GS1-N2,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Column_Temperature,,GS2-N2,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Autosampler_Temperature,,CAD-N2,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Divert,,MR_pause_between_mass_range,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Run_Time,,MS_settling_time,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,Retention_Time,,,,,,
