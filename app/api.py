@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from app.internal.GraphPopulator import GraphPopulator
+from neo4j import GraphDatabase
 #from deta import Deta, Drive
 from dotenv import load_dotenv
 import os
@@ -411,6 +412,53 @@ def directoryTest():
     os.chdir("/tmp")
     nwd = os.getcwd()
     return {"cwd":cwd, "nwd":nwd}
+
+#make a new route with an int parameter
+@app.get("/search/{table}")
+def search(table):
+    #1 = matrixQC
+    #2 = workingStandardSolution
+    #3 = workingQCSolution
+    uri = "neo4j+s://d0dc487d.databases.neo4j.io"
+    driver = GraphDatabase.driver(uri, auth=("neo4j", "TPtTcrMAhv1fW93bF30hsZsPKw5x7XbfN8O8ayFvCok"))
+    #make a new object
+    obj = {}
+    
+    def print_MatrixQCs(tx):
+        result = tx.run("MATCH (a:MatrixQCs) RETURN a.Table")
+        for record in result:
+            print(record.get('a.Table').replace("*","'"))
+            obj["table"] = record.get('a.Table').replace("*","'")
+
+    def print_WorkingStandardSolution(tx):
+        result = tx.run("MATCH (a:WorkingQCSolution) RETURN a.Table")
+        for record in result:
+            print(record.get('a.Table').replace("*","'"))
+            obj["table"] = record.get('a.Table').replace("*","'")
+
+    def print_WorkingQCSolution(tx):
+        result = tx.run("MATCH (a:WorkingStandardSolution) RETURN a.Table")
+        for record in result:
+            print(record.get('a.Table').replace("*","'"))
+            obj["table"] = record.get('a.Table').replace("*","'")
+
+    with driver.session() as session:
+        if table == "1":
+            session.execute_read(print_MatrixQCs)
+        elif table == "2":
+            session.execute_read(print_WorkingStandardSolution)
+        elif table == "3":
+            session.execute_read(print_WorkingQCSolution)
+        #session.execute_read(print_WorkingStandardSolution)
+        #session.execute_read(print_WorkingQCSolution)
+        #session.execute_read(print_MatrixQCs)
+
+    driver.close()
+    
+    return {"table":obj["table"]}
+
+
+
 
 @app.get('/populatedb')
 def populateDB():
