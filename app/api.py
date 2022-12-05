@@ -75,25 +75,24 @@ def parse_pdf():
         return Response(pd.read_csv('BP-0001.csv').to_json(orient='records'), media_type='application/json')
 
     inputFile = "BP-0001.pdf"
-    pdfFileObj = open(inputFile, 'rb')
-    pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
-    
+
+    pdfFileObj = open(inputFile,'rb')
+    pdfReader = PyPDF2.PdfFileReader(pdfFileObj) 
+
     searchString = ""
     numOfPages = pdfReader.numPages
     for i in range(numOfPages):
         pageObj = pdfReader.getPage(i)
         z = pageObj.extractText()
-        document = z.replace("\n", " ").replace(",", "")
-        document = re.sub(' +', ' ', document)
-        searchString += document
+        document = z.replace("\n", " ").replace(",","")
+        document = re.sub(' +',' ', document)
+        searchString = searchString + document
 
     pdfFileObj.close()
-    print("closed the pdf file successfully after building the search string")
 
     # Table Extraction
 
     tables = camelot.read_pdf(inputFile,pages = "1-" + str(numOfPages),line_scale = 40)
-    print("tables extracted successfully with camelot")
 
     # RegEx Parsing
 
@@ -104,19 +103,19 @@ def parse_pdf():
     # List Values
 
     # Species
-    species = ["Rat ", "Monkey ", "Dog ", "Cat ", "Rabbit ", "Human "]
+    species = [" Rat ", " Monkey ", " Dog ", " Cat ", " Rabbit ", " Human "]
     # Matrix
-    matrix = ["Plasma", "Urine", "Serum", "Liver", "Brain"]
+    matrix = [" Plasma", " Urine", " Serum", " Liver", " Brain"]
     # Extraction Method
-    extraction_method = ["protein precipitation", "liquid liquid extraction", "solid phase extraction", "immunoprecipitation", "solid liquid extraction"]
-    # Chromatography
-    chromatography = ["reversed phase", "normal phase","ion exchange","hydrophilic interaction","liquid chromatography"]
+    extraction_method = [" protein precipitation ", " liquid liquid extraction ", " solid phase extraction ", " immunoprecipitation ", " solid liquid extraction "]
+    # Chromatography 
+    chromatography = [" reversed phase ", " normal phase "," ion exchange "," hydrophilic interaction "," liquid chromatography "]
     # Ionization Method
-    ionization_method = ["turbo ionspray", "Atmospheric pressure chemical ionization"]
+    ionization_method = [" turbo ionspray ", " Atmospheric pressure chemical ionization "]
     # Polarity
-    polarity = ["positive", "negative"]
+    polarity = [" positive ", " negative "]
     # Regression Model
-    regression_model = ["linear","quadratic"]
+    regression_model = [" linear "," quadratic "]
     # Weighting
     weighting = ["1/x","1/x2"]
     # Dilutent
@@ -138,7 +137,7 @@ def parse_pdf():
         value = re.search(compoundType + "-([^\s]+)",searchString, re.I)
         value = setIfNotNone(value)
         headers.append(compoundType)
-        rows.append(compoundType + str(value.replace(")","")))
+        rows.append(compoundType + "-" + str(value.replace(")","")))
 
     def valueFindSearchList(value, nameType):
         returnValue = None
@@ -156,7 +155,7 @@ def parse_pdf():
 
     bpNumber = compoundFindSearch("BP Number","BP")
 
-    speciesValue = valueFindSearchList(species, "Species")
+    # speciesValue = valueFindSearchList(species, "Species") [happens to be wrong sometimes]
     matrixValue = valueFindSearchList(matrix, "Matrix")
     extractionMethodValue = valueFindSearchList(extraction_method, "Extraction Method")
     chromatographyValue = valueFindSearchList(chromatography, "Chromatography")
@@ -178,7 +177,7 @@ def parse_pdf():
     # Calibration Range
 
     calibrationRange = None
-    calibrationRange = re.search(r"calibration range from (.*?) to (.*?) ng", searchString, re.I)
+    calibrationRange = re.search(r"calibration range from (.*?) to ([^\s]+)", searchString, re.I)
     headers.append("Calibration Range From")
     rows.append(calibrationRange.group(1))
     headers.append("Calibration Range To")
@@ -259,7 +258,7 @@ def parse_pdf():
                             headers.append("MK Number")
                             rows.append(str(searchTable[row][column]))              
                     if column != 0:
-                        headers.append(searchTable[row][0] + str(searchTable[0][column]))
+                        headers.append(searchTable[row][0] + " " + str(searchTable[0][column]))
                         rows.append(searchTable[row][column])
 
     # Get and label values from Rows under Header [Analyte] - Labeling not Based on Column 1
@@ -285,15 +284,15 @@ def parse_pdf():
                             headers.append("MK Number")
                             rows.append(str(searchTable[row][column]))              
                     if column != 0:
-                        headers.append(searchTable[row][0] + searchColumns[column - 1])
+                        headers.append(searchTable[row][0] + " " + searchColumns[column - 1])
                         rows.append(searchTable[row][column])
 
     counter = 0
 
     for table in tables:
-        if "Category" in re.sub(' +',' ', table.df.at[0,0].replace("\n", "")) and "Mass Spectrometer " in re.sub(' +',' ', table.df.at[0,0].replace("\n", "")):
+        if "Category" in re.sub(' +',' ', table.df.at[0,0].replace("\n", "")) and "Mass Spectrometer" in re.sub(' +',' ', table.df.at[1,0].replace("\n", "")):
             columnValues = ["Components"]
-            rowValues = ["Mass Spectrometer", "LC", "Liquid Handling"]
+            rowValues = ["Mass Spectrometer", "Liquid Handling"]
             findColumnRowValues(table.df.to_numpy(), columnValues, rowValues)
         elif "Category (General)" in re.sub(' +',' ', table.df.at[0,0].replace("\n", "")):
             l = len(table.df.to_numpy())
@@ -356,8 +355,8 @@ def parse_pdf():
     rows.append(re.sub("Page [0-9]{2}", "", re.sub("BP-[0-9]{4}", "", names)).replace("Confidential",""))
 
     # Prints Headers [Label] and Rows [Value (only one row)]
-    #print(headers)
-    #print(rows)
+    print(headers)
+    print(rows)
 
     with open(str(inputFile)[:len(inputFile)-4] + ".csv", "w", encoding = 'UTF8', newline = '') as f:
         write = csv.writer(f)
