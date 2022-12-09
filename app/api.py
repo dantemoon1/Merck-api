@@ -50,24 +50,20 @@ def render():
 
     return """
     <form action="/upload" method="post" enctype="multipart/form-data">
+        <h1>Upload a PDF and Parse</h1>
+        <p> If you see a JSON response then the file was sucessfully parsed </p>
         <input type="file" name="file">
         <input type="submit">
     </form>
-    """
-
-@app.get("/uploadcsv", response_class=HTMLResponse)
-def render():
-    print('the default directory is: ', cwd)
-    print('the current directory is: ', os.getcwd())
-    if cwd != os.getcwd():
-        os.chdir(cwd)
-        print('the current directory is: ', os.getcwd())
-
-    return """
+    <hr>
     <form action="/uploadcsv" method="post" enctype="multipart/form-data">
+        <h1>Upload a CSV and Send to Neo4j</h1>
+        <p> You should see a JSON response with "success" if the file was sucessfully sent to Neo4j </p>
+        <p> Otherwise check the python console for errors </p>
         <input type="file" name="file">
         <input type="submit">
     </form>
+    <hr>
     """
 
 
@@ -80,25 +76,26 @@ def upload(file: UploadFile = File(...)):
     file_name = f"tmp/{file.filename}"
     #redirect to the root route
     #return {"filename": file.filename}
-    return RedirectResponse(url="/parse", status_code=303)
+    return RedirectResponse(url="/parse/" + file.filename, status_code=303)
 
 @app.post("/uploadcsv")
 def uploadcsv(file: UploadFile = File(...)):
     with open(f"/tmp/{file.filename}", "wb") as buffer:
         buffer.write(file.file.read())
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url="/populatedb/" + file.filename, status_code=303)
+    
 
-@app.get("/parse")
-def parse_pdf():
+@app.get("/parse/{file_name}")
+def parse_pdf(file_name):
 
     os.chdir("/tmp") #change directory to /tmp
 
     #check if the csv already exists, if so return it as a response
-    if os.path.exists('BP-0001.csv'):
+    if os.path.exists(file_name.replace("pdf","csv")):
         print('csv already exists on server')
-        return Response(pd.read_csv('BP-0001.csv').to_json(orient='records'), media_type='application/json')
+        return Response(pd.read_csv(file_name.replace("pdf","csv")).to_json(orient='records'), media_type='application/json')
 
-    inputFile = "BP-0001.pdf"
+    inputFile = file_name
 
     pdfFileObj = open(inputFile,'rb')
     pdfReader = PyPDF2.PdfFileReader(pdfFileObj) 
@@ -376,7 +373,8 @@ def parse_pdf():
     names = re.search(r"drug concentration.(.*?)APPENDIX", searchString)
     names = setIfNotNone(names)
     headers.append("Names")
-    rows.append(re.sub("Page [0-9]{2}", "", re.sub("BP-[0-9]{4}", "", names)).replace("Confidential",""))
+    #rows.append(re.sub("Page [0-9]{2}", "", re.sub("BP-[0-9]{4}", "", names)).replace("Confidential",""))
+    #this line breaks the entire thing
 
     # Prints Headers [Label] and Rows [Value (only one row)]
     print(headers)
@@ -388,18 +386,9 @@ def parse_pdf():
         write.writerow(rows)
 
 
-    return Response(pd.read_csv('BP-0001.csv').to_json(orient='records'), media_type='application/json')
+    return Response(pd.read_csv(file_name.replace("pdf","csv")).to_json(orient='records'), media_type='application/json')
     # return the csv as json without pandas
     #return Response(json.dumps(rows), media_type='application/json')
-
-@app.get("/pdftest")
-def pdfTest():
-    #open the pdf located in /tmp and return the first page text
-    inputFile = "BP-0001.pdf"
-    pdfFileObj = open(f"tmp/{inputFile}", 'rb')
-    pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
-    pageObj = pdfReader.getPage(0)
-    return(pageObj.extractText())
 
 @app.get("/allfiles")
 def allfiles():
@@ -460,12 +449,12 @@ def search(table):
 
 
 
-@app.get('/populatedb')
-def populateDB():
+@app.get('/populatedb/{inputFile}')
+def populateDB(inputFile):
     os.chdir(cwd)
     print('populating db')
-    df = pd.read_csv("/tmp/BP-0002.csv")
-    print('located the csv in /tmp')
+    df = pd.read_csv("/tmp/"+inputFile)
+    print('located the file ' + inputFile + ' in /tmp')
     schema = pd.read_csv("app/internal/schema/BP_triple_final.csv")
     print('located the schema in /schema')
     schema = schema.set_index(['node1', 'node2'])
@@ -583,3 +572,4 @@ def populateDB():
 
     gp.close()
     print("Done")
+    return("Success")
