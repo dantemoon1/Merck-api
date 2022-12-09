@@ -471,16 +471,30 @@ def populateDB(inputFile):
     gp = GraphPopulator("neo4j+s://d0dc487d.databases.neo4j.io",
                         "neo4j", "TPtTcrMAhv1fW93bF30hsZsPKw5x7XbfN8O8ayFvCok")
 
-    info["Matrix QC ID"] = info["Matrix QC ID"].replace("'", "*")
-    info["Mixed Intermediate Standard Solution ID"] = info["Mixed Intermediate Standard Solution ID"].replace(
+    try:
+        info["Matrix QC ID"] = info["Matrix QC ID"].replace("'", "*")
+    except:
+        pass
+    try:
+        info["Mixed Intermediate Standard Solution ID"] = info["Mixed Intermediate Standard Solution ID"].replace(
         "'", "*")
-    info["Working Standard Solution ID"] = info["Working Standard Solution ID"].replace(
+    except:
+        pass
+    try:
+        info["Mixed Intermediate QC Solution ID"] = info["Mixed Intermediate QC Solution ID"].replace(
         "'", "*")
-    info["Mixed Intermediate QC Solution ID"] = info["Mixed Intermediate QC Solution ID"].replace(
+    except:
+        pass
+    try:
+        info["Working QC Solution ID"] = info["Working QC Solution ID"].replace(
         "'", "*")
-    info["Working QC Solution ID"] = info["Working QC Solution ID"].replace(
-        "'", "*")
-    info["Step"] = info["Step"].replace("'", "*")
+    except:
+        pass
+    try:
+        info["Step"] = info["Step"].replace("'", "*")
+    except:
+        pass
+
     nodes = []
 
 
@@ -552,20 +566,20 @@ def populateDB(inputFile):
     add_node("Procedure", {"Steps": "Step"})
     ion_mon_props = {"Values": ["Q1 m/z", "Q3 m/z",
                                 "Dwell (ms)", "DP (V)", "EP (V)", "CE (V)", "CXP (V)"]}
-    ion_mon_props["Analyte"] = [info[info["MK Number"] + " " + val]
+    try:
+        ion_mon_props["Analyte"] = [info[info["MK Number"] + " " + val]
                                 for val in ion_mon_props["Values"]]
-    ion_mon_props["Internal_standard_analyte"] = [
-        info["SIL-" + info["MK Number"] + " " + val] for val in ion_mon_props["Values"]]
-    if "Analyte / L-Number Epimer \n(Analyte)" in info.index:
-        ion_mon_props["Epimer"] = [
-            info[info["Analyte / L-Number Epimer \n(Analyte)"] + " " + val] for val in ion_mon_props["Values"]]
-        ion_mon_props["Internal_standard_epimer"] = [
-            info["SIL-" + info["Analyte / L-Number Epimer \n(Analyte)"] + " " + val] for val in ion_mon_props["Values"]]
-    nodes.append(("IonsMonitored", ion_mon_props))
-    add_node("SystemSuitability", {"Analyte": "Analyte", "Peak_height": "Peak Height", "Retention_time": "Retention time \n(min)",
-            "Retention_difference": "Retention time \ndifference for \nMK-0011 and \nL-000000009 \n(min)"})
+        ion_mon_props["Internal_standard_analyte"] = [
+            info["SIL-" + info["MK Number"] + " " + val] for val in ion_mon_props["Values"]]
+        if "Analyte / L-Number Epimer \n(Analyte)" in info.index:
+            ion_mon_props["Epimer"] = [
+                info[info["Analyte / L-Number Epimer \n(Analyte)"] + " " + val] for val in ion_mon_props["Values"]]
+            ion_mon_props["Internal_standard_epimer"] = [
+                info["SIL-" + info["Analyte / L-Number Epimer \n(Analyte)"] + " " + val] for val in ion_mon_props["Values"]]
+        nodes.append(("IonsMonitored", ion_mon_props))
+    except:
+        pass
 
-    gp.execute(operation="wipe")
     for node in nodes:
         gp.execute(operation="create_node", node_label=node[0], node_props=node[1])
 
@@ -575,7 +589,7 @@ def populateDB(inputFile):
             if relation:
                 gp.execute(operation="create_rel", node1_label=node1[0], node1_props={},
                         node2_label=node2[0], node2_props={}, rel_name=relation['relation'], rel_props={})
-                
+
 
     gp.close()
     print("Done")
