@@ -5,7 +5,6 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from app.internal.GraphPopulator import GraphPopulator
 from neo4j import GraphDatabase
-#from deta import Deta, Drive
 from dotenv import load_dotenv
 import os
 import json
@@ -20,7 +19,7 @@ import pandas as pd
 
 app = FastAPI()
 
-origins = ["*"]
+origins = ["*"] #currently allowing all origins, change this if you want to restrict access
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,7 +29,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-load_dotenv()
+load_dotenv() #not currently using but should probably store the neo4j credentials in a .env file moving forward
 
 #get the current working directory
 cwd = os.getcwd()
@@ -38,9 +37,6 @@ cwd = os.getcwd()
 
 @app.get("/", response_class=HTMLResponse)
 def render():
-    #print all the folders in the current directory
-    #print(os.listdir())
-
     #check if the current directory is the base directory and if not, change it to the base directory
     print('the default directory is: ', cwd)
     print('the current directory is: ', os.getcwd())
@@ -64,6 +60,11 @@ def render():
         <input type="submit">
     </form>
     <hr>
+    <form action="/clearcache" method="post" enctype="multipart/form-data">
+        <h1>Clear the Cache</h1>
+        <p> Parsed pdfs are stored on the server so if you want to actually parse a new PDF with the same name, you need to clear the cache </p>
+        <input type="submit" value="Clear Cache">
+    </form>
     """
 
 
@@ -72,10 +73,6 @@ def upload(file: UploadFile = File(...)):
     #upload file to /tmp
     with open(f"/tmp/{file.filename}", "wb") as buffer:
         buffer.write(file.file.read())
-    #get the name of the file from tmp
-    file_name = f"tmp/{file.filename}"
-    #redirect to the root route
-    #return {"filename": file.filename}
     return RedirectResponse(url="/parse/" + file.filename, status_code=303)
 
 @app.post("/uploadcsv")
@@ -83,6 +80,18 @@ def uploadcsv(file: UploadFile = File(...)):
     with open(f"/tmp/{file.filename}", "wb") as buffer:
         buffer.write(file.file.read())
     return RedirectResponse(url="/populatedb/" + file.filename, status_code=303)
+
+@app.post("/clearcache")
+def clearcache():
+    #clear the cache
+    os.chdir("/tmp")
+    for file in os.listdir():
+        if file.endswith(".csv"):
+            os.remove(file)
+    
+    os.chdir(cwd)
+
+    return {"success": "cache cleared"}
     
 
 @app.get("/parse/{file_name}")
@@ -385,10 +394,8 @@ def parse_pdf(file_name):
         write.writerow(headers)
         write.writerow(rows)
 
-
+    #THIS IS WHAT TAKES THE CSV AND RETURNS IT AS JSON
     return Response(pd.read_csv(file_name.replace("pdf","csv")).to_json(orient='records'), media_type='application/json')
-    # return the csv as json without pandas
-    #return Response(json.dumps(rows), media_type='application/json')
 
 @app.get("/allfiles")
 def allfiles():
@@ -402,8 +409,8 @@ def directoryTest():
     nwd = os.getcwd()
     return {"cwd":cwd, "nwd":nwd}
 
-#make a new route with an int parameter
-@app.get("/search/{table}")
+
+@app.get("/search/{table}") #used to search for a specific table, obviously this is not the best way to do this
 def search(table):
     #1 = matrixQC
     #2 = workingStandardSolution
